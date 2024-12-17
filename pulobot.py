@@ -3,8 +3,7 @@ import os
 import qrcode
 import json
 from datetime import datetime
-from gg import all_gg
-from gg import gaining_grounds
+from gg import *
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -20,7 +19,7 @@ def message_read(message):
     except:
         gg_input = 'gg4'
     try:
-        event_name = arguments[2].strip()[:20]
+        event_name = arguments[2].strip()[:35]
     except:
         event_name = 'Unnamed event'
     try:
@@ -107,7 +106,7 @@ def scenario_generator(rounds_number, strat_pool, pool_of_scheme_pools):
         scenario['Schemes'] = pool_of_scheme_pools.pop(random.choice(range(len(pool_of_scheme_pools))))
     return scenarios
 
-def qrcode_generator(scenarios, event_name,request_time,message_author):
+def qrcode_generator(scenarios, event_name,request_time,message_author, options):
     images_names = []
     path = f'''output/{event_name}_{request_time}'''
     os.mkdir(path)
@@ -117,22 +116,38 @@ def qrcode_generator(scenarios, event_name,request_time,message_author):
             schemes_decoded.append(all_gg['ggall']['schemes'].index(scheme))
         data_input = {"specialRules":{},"name": event_name + ' Round ' + str(scenario['Round']), "ruleset":"All", "strat": scenario['Strategy'], "deployment": scenario['Deployment'], "maxCrewSize": 50, "createdIn":"1.7.24", "created": "2004-04-02T21:37:00.000", "schemePool": schemes_decoded}
         imago = qrcode.make(json.dumps(data_input))
+        imago = imago.resize((690, 690))
         imago.save(f'{path}/qr.png')
         image1 = Image.new("RGB", (1500, 750), color=(47,49,54))
+        if '-vas' in options:
+            image1 = Image.new("RGB", (2250, 750), color=(47,49,54))
+            map_num = random.choice(range(1, len(vassal_maps)))
+            vassal_map = Image.open(f'vassal_maps/{map_num}.png')
+            image1.paste(vassal_map, (1530, 30))
+            vassal_map.close
         image2 = Image.open(f'{path}/qr.png')
         image1.paste(image2, (30, 30))
         image2.close
         os.remove(f'{path}/qr.png')
-        fnt = ImageFont.truetype('comic.ttf', 40)
+        fnt = ImageFont.truetype(font, 40)
         draw = ImageDraw.Draw(image1)
-        draw.text(xy=(800, 100), text=f'''{event_name}''', font=fnt, fill=(255, 255, 255))
-        draw.text(xy=(800, 150), text=f'''Round {scenario['Round']}''', font=fnt, fill=(255, 255, 255))
-        draw.text(xy=(800, 200), text=f'''Deployment: {scenario['Deployment']}''', font=fnt, fill=(255, 255, 255))
-        draw.text(xy=(800, 250), text=f'''Strategy: {scenario['Strategy']}''', font=fnt, fill=(255, 255, 255))
-        draw.text(xy=(800, 300), text='Schemes:', font=fnt, fill=(255, 255, 255))
+        w = draw.textlength(event_name, font=fnt)
+        draw.text(xy=(1125-(w/2), 100), text=event_name, font=fnt, fill=(255, 255, 255), stroke_width=5, stroke_fill=(0,0,0))
+        w = draw.textlength(f'''Round {scenario['Round']}''', font=fnt)
+        draw.text(xy=(1125-(w/2), 150), text=f'''Round {scenario['Round']}''', font=fnt, fill=(255, 255, 255), stroke_width=5, stroke_fill=(0,0,0))
+        w = draw.textlength(f'''Deployment: {scenario['Deployment']}''', font=fnt)
+        draw.text(xy=(1125-(w/2), 200), text=f'''Deployment: {scenario['Deployment']}''', font=fnt, fill=(255, 255, 255), stroke_width=5, stroke_fill=(0,0,0))
+        w = draw.textlength(f'''Strategy: {scenario['Strategy']}''', font=fnt)
+        draw.text(xy=(1125-(w/2), 250), text=f'''Strategy: {scenario['Strategy']}''', font=fnt, fill=(255, 255, 255), stroke_width=5, stroke_fill=(0,0,0))
+        w = draw.textlength('Schemes:', font=fnt)
+        draw.text(xy=(1125-(w/2), 300), text='Schemes:', font=fnt, fill=(255, 255, 255), stroke_width=5, stroke_fill=(0,0,0))
+        if '-vas' in options:
+            w = draw.textlength(f'[{map_num}] {vassal_maps[map_num]}', font=fnt)
+            draw.text(xy=(1875-(w/2), 50), text=f'[{map_num}] {vassal_maps[map_num]}', font=fnt, fill=(255, 255, 255), stroke_width=5, stroke_fill=(0,0,0))
         for num, scheme in enumerate(scenario['Schemes']):
+            w = draw.textlength(f'''{scheme}''', font=fnt)
             y = 350 + num*50
-            draw.text(xy=(850, y), text=f'''{scheme}''', font=fnt, fill=(255, 255, 255))
+            draw.text(xy=(1125-(w/2), y), text=f'''{scheme}''', font=fnt, fill=(255, 255, 255), stroke_width=5, stroke_fill=(0,0,0))
         image1.save(f'''{path}/{scenario['Round']}.png''')
         images_names.append(f'''{path}/{scenario['Round']}.png''')
     return images_names
@@ -143,5 +158,5 @@ def get_pule(message):
     strat_generated = strat_generator(user_input[0], gg_input)
     schemes_generated = scheme_generator(user_input[0], gg_input)
     scenarios = scenario_generator(user_input[0], strat_generated, schemes_generated)
-    qr_codes = qrcode_generator(scenarios, user_input[2],user_input[4],user_input[5])
+    qr_codes = qrcode_generator(scenarios, user_input[2],user_input[4],user_input[5], user_input[3])
     return qr_codes
