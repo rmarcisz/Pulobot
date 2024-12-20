@@ -87,7 +87,6 @@ def scheme_generator(rounds_number, scenario_gg):
     scheme_pool = scheme_pool_randomizer()
     for round in range(rounds_number):
         pool_of_scheme_pools.append([])
-    print(pool_of_scheme_pools)
     while scheme_pool != []:
         i = 0
         scheme = max(set(scheme_pool), key=scheme_pool.count)
@@ -122,6 +121,7 @@ def scenario_generator(rounds_number, strat_pool, pool_of_scheme_pools):
     return scenarios
 
 def qrcode_generator(scenarios, event_name,options,request_time):
+    maps_used = []
     rules = {}
     if 'sin' in options:
         rules['Singles'] = {'name': 'Singles'}
@@ -167,6 +167,8 @@ def qrcode_generator(scenarios, event_name,options,request_time):
         if '-vas' in options:
             image_vas = Image.new('RGB', (760, 750), color=(47,49,54))
             map_num = random.choice(range(1, len(vassal_maps)))
+            while map_num in maps_used:
+                map_num = random.choice(range(1, len(vassal_maps)))
             vassal_map = Image.open(f'vassal_maps/{map_num}.png')
             image_vas.paste(vassal_map, (30, 30))
             vassal_map.close
@@ -177,6 +179,7 @@ def qrcode_generator(scenarios, event_name,options,request_time):
             new_image.paste(image1, (0,0))
             new_image.paste(image_vas, (1500,0))
             image1 = new_image
+            maps_used.append(map_num)
         image1.save(f'''{path}/{scenario['Round']}.png''')
         images_names.append(f'''{path}/{scenario['Round']}.png''')
     return images_names
